@@ -1,80 +1,82 @@
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
-
-import static java.util.Arrays.sort;
 
 public class Claw {
-
-    static int getLeftStack(int pos, int[] boxes)
+    static int RIGHT = 0;
+    static int LEFT= 1;
+    static int NOT_FOUND = - 1;
+    static int MAX_BOXES = 16;
+    static int MAX_BOXES_IN_STACK = 5;
+    static int MIN_BOXES_IN_STACK = 1;
+    static int MIN_STACKS = 2;
+    static int MAX_STACKS = 8;
+    static int AMOUNT_OF_TURNS = 100;
+    static int getLeftStack(int pos)
     {
-        if (pos == 0)
-            return boxes.length -1;
-        else
             return pos - 1;
     }
-    static int getRightStack(int pos, int[] boxes)
+    static int getRightStack(int pos)
     {
-        if(pos == boxes.length - 1)
-            return 0;
-        else
             return pos + 1;
     }
-    static boolean canPickFromPos(int clawPos, int[] boxes)
+    static boolean isFirstStack(int pos)
     {
-        return boxes[clawPos] > 2;
+        return pos == 0;
     }
-    static boolean canPlaceInPos(int clawPos, int[] boxes)
+    static boolean isLastStack(int pos, int[] boxes)
     {
-        return boxes[clawPos] < 5;
+        return pos == boxes.length -1;
     }
-    static int searchForStack(int pos, int[] boxes, Predicate<Integer> comparison, int direction) {
-        if((direction == 1 && pos == 0) || (direction == 0 && pos == boxes.length -1))
-            return -1;
-        if (comparison.test(pos)) {
-            return pos;
-        }
-        if(direction == 1)
-            return searchForStack(getLeftStack(pos, boxes), boxes, comparison,direction);
-        else
-            return searchForStack(getRightStack(pos, boxes), boxes, comparison,direction);
-
-    }
-    static int searchForEmptierLeftStack(int clawPos, int[] boxes) {
-        return searchForStack(clawPos, boxes, pos -> boxes[clawPos] > boxes[getLeftStack(pos, boxes)],1);
-    }
-    static int searchForEmptierOrEqualLeftStack(int clawPos, int[] boxes) {
-        return searchForStack(clawPos, boxes, pos -> boxes[clawPos] >= boxes[getLeftStack(pos, boxes)],1);
-    }
-
-    static int searchForFullerRightStack(int clawPos, int[] boxes) {
-        return searchForStack(clawPos, boxes , pos -> boxes[clawPos] <= boxes[getRightStack(pos, boxes)],0);
-    }
-
-    static int searchForEmptierRightStack(int clawPos, int[] boxes) {
-        return searchForStack(clawPos, boxes, pos ->boxes[clawPos] > boxes[getRightStack(pos, boxes)],0);
-    }
-    static boolean checkIfOrdered(int[] array)
+    static boolean hasReachedEdge(int pos, int direction, int[] boxes)
     {
-        for (int i = 0; i < array.length - 1; i++) {
-            if (array[i + 1] > array[i])
-                return false;
-        }
+        if(direction == LEFT)
+            return isFirstStack(pos);
+        if(direction ==  RIGHT)
+            return isLastStack(pos,boxes);
         return true;
     }
 
+    static boolean canPickFromPos(int clawPos, int[] boxes)
+    {
+        return boxes[clawPos]  > MIN_BOXES_IN_STACK + 1;
+    }
+    static boolean canPlaceInPos(int clawPos, int[] boxes)
+    {
+        return boxes[clawPos] < MAX_BOXES_IN_STACK;
+    }
+    static int searchForStack(int pos, int[] boxes, Predicate<Integer> comparison, int direction) {
+        if(hasReachedEdge(pos,direction,boxes))
+            return NOT_FOUND;
+        if (comparison.test(pos)) {
+            return pos;
+        }
+        if(direction == LEFT)
+            return searchForStack(getLeftStack(pos), boxes, comparison,direction);
+        else if (direction == RIGHT)
+            return searchForStack(getRightStack(pos), boxes, comparison,direction);
+        else
+            return NOT_FOUND;
+    }
+    static int searchForEmptierLeftStack(int clawPos, int[] boxes) {
+        return searchForStack(clawPos, boxes, pos -> boxes[clawPos] > boxes[getLeftStack(pos)],LEFT);
+    }
+    static int searchForEmptierOrEqualLeftStack(int clawPos, int[] boxes) {
+        return searchForStack(clawPos, boxes, pos -> boxes[clawPos] >= boxes[getLeftStack(pos)],LEFT);
+    }
+
+    static int searchForFullerRightStack(int clawPos, int[] boxes) {
+        return searchForStack(clawPos, boxes , pos -> boxes[clawPos] <= boxes[getRightStack(pos)],RIGHT);
+    }
+
+
     public static Command solve(int clawPos, int[] boxes, int boxInClaw)
     {
-        System.out.println("cajas:"+ Arrays.toString(boxes));
-        System.out.println("la garra esta en " + clawPos + "y " + boxInClaw);
-        if(clawPos < 0 || clawPos > boxes.length -1|| boxes.length > 8 || boxes.length < 2 || Arrays.stream(boxes).anyMatch(b -> b > 5 || b < 1) || Arrays.stream(boxes).sum() > 16)
+        System.out.println("BOXES: "+ Arrays.toString(boxes) + " CLAW POS: " + clawPos +" BOX IN CLAW= " + boxInClaw);
+        if(clawPos < 0 || clawPos > boxes.length -1|| boxes.length > MAX_STACKS || boxes.length < MIN_STACKS || Arrays.stream(boxes).anyMatch(b -> b > MAX_BOXES_IN_STACK || b < MIN_BOXES_IN_STACK) || Arrays.stream(boxes).sum() > MAX_BOXES)
             return Command.WARNING;
         if( boxInClaw == 1)
         {
-            if(clawPos != 0 && searchForEmptierOrEqualLeftStack(clawPos,boxes) != -1)
+            if(!isFirstStack(clawPos) && searchForEmptierOrEqualLeftStack(clawPos,boxes) != NOT_FOUND)
                 return Command.LEFT;
             if(canPlaceInPos(clawPos,boxes))
                 return Command.PLACE;
@@ -82,35 +84,38 @@ public class Claw {
         }
         if(boxInClaw == 0)
         {
-            if(clawPos != boxes.length -1 && searchForFullerRightStack(clawPos,boxes) != -1)
+            if(!isLastStack(clawPos,boxes) && searchForFullerRightStack(clawPos,boxes) != NOT_FOUND)
                 return Command.RIGHT;
-            if(clawPos != 0 && searchForEmptierLeftStack(clawPos,boxes) != -1)
+            if(searchForEmptierLeftStack(clawPos,boxes) != NOT_FOUND || isFirstStack(clawPos))
             {
-                if (canPickFromPos(clawPos,boxes))
-                    return Command.PICK;
+                if (!isFirstStack(clawPos))
+                {
+                    if (canPickFromPos(clawPos,boxes))
+                        return Command.PICK;
+                    else
+                        return Command.LEFT;
+                }
                 else
                     return Command.RIGHT;
             }
-            if(checkIfOrdered(boxes))
-                return Command.VICTORY;
-            if(clawPos == 0)
-                return Command.RIGHT;
+            return Command.VICTORY;
         }
 
         return Command.WARNING;
     }
     public static void main(String[] args) {
+        //SET YOUR GAME VARIABLES HERE!
         int clawPos = 0;
-        int[] boxes = new int[]{3,3,2,2,2};
+        int[] boxes = new int[]{4,3,3,2};
         int boxInClaw = 0;
-        boolean gane = false;
-        for (int i = 0;i <100;i++)
+        boolean VICTORY = false;
+        for (int i = 0;i < AMOUNT_OF_TURNS;i++)
         {
             Command command = solve(clawPos,boxes,boxInClaw);
             if (command.equals(Command.LEFT))
-                clawPos = clawPos -1;
+                clawPos = getLeftStack(clawPos);
             if(command.equals(Command.RIGHT))
-                clawPos = clawPos +1;
+                clawPos = getRightStack(clawPos);
             if(command.equals(Command.PICK))
             {
                 boxInClaw = 1;
@@ -122,22 +127,17 @@ public class Claw {
                 boxes[clawPos] ++;
             }
             if(command.equals(Command.WARNING))
-            {
-                System.out.println("perdi");
                 break;
-            }
             if(command.equals(Command.VICTORY))
             {
-                System.out.println("llegue " + i);
-                gane = true;
+                VICTORY = true;
                 break;
             }
         }
-        System.out.println("asi quedaron las cajas "+ Arrays.toString(boxes) + " y la garra esta en" + clawPos +" y esta asi box in claw " + boxInClaw);
-        if(gane)
-            System.out.println("GANE");
+        if(VICTORY)
+            System.out.println("VICTORY");
         else
-            System.out.println("alta luser");
+            System.out.println("YOU LOST");
     }
 }
 

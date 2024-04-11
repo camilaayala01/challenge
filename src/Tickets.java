@@ -15,6 +15,12 @@ public class Tickets {
         return("YES");
     }
     public static void main(String[] args) {
-        System.out.println(tickets(new int[]{25,50,25,100,25,25,25,100,25,25,50,100,50,25}));
+        System.out.println(tickets(new int[]{25,100})); //NO
+        System.out.println(tickets(new int[]{10,100})); //NO
+        System.out.println(tickets(new int[]{25,25,50}));//YES
+        System.out.println(tickets(new int[]{25,50}));//YES
+        System.out.println(tickets(new int[]{25,50,25,25,100})); //YES
+        System.out.println(tickets(new int[]{25,50,25,25,100,25,25,25,100,25,25,50,100,50,25})); //YES
+        System.out.println(tickets(new int[]{25,50,25,100,25,25,25,100,25,25,50,100,50,25})); //NO
     }
 }
