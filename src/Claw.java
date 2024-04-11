@@ -1,5 +1,7 @@
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
@@ -55,9 +57,16 @@ public class Claw {
     static int searchForEmptierRightStack(int clawPos, int[] boxes) {
         return searchForStack(clawPos, boxes, pos ->boxes[clawPos] > boxes[getRightStack(pos, boxes)],0);
     }
-    static boolean checkIfOrdered(int[] boxes)
+    static boolean checkIfOrdered(int[] array)
     {
-        return Arrays.equals(boxes,IntStream.of(boxes).sorted().toArray());
+        for(int j = 0; j < array.length - 1; j++ )
+        {
+            for (int i = 0; i < array.length - 1; i++) {
+                if (i > j && array[i] > array[j])
+                    return false;
+            }
+        }
+        return true;
     }
 
     public static Command solve(int clawPos, int[] boxes, int boxInClaw)
@@ -73,37 +82,20 @@ public class Claw {
             if(canPlaceInPos(clawPos,boxes))
                 return Command.PLACE;
 
-            if(clawPos != boxes.length -1 && searchForEmptierRightStack(clawPos,boxes) != -1)
-            {
-                if (clawPos != boxes.length - 1)
-                    return Command.RIGHT;
-            }
-
-
         }
         if(boxInClaw == 0)
         {
-            if(clawPos != boxes.length -1 && (searchForFullerRightStack(clawPos,boxes) != -1))
+            if(clawPos != boxes.length -1 && searchForFullerRightStack(clawPos,boxes) != -1)
                 return Command.RIGHT;
             if(clawPos != 0 && searchForEmptierLeftStack(clawPos,boxes) != -1)
             {
                 if (canPickFromPos(clawPos,boxes))
                     return Command.PICK;
-                else if(clawPos != boxes.length -1  && searchForEmptierRightStack(clawPos,boxes) != -1)
+                else
                     return Command.RIGHT;
             }
-            if(!checkIfOrdered(boxes))
-            {
-                if(clawPos == 0)
-                    return Command.RIGHT;
-                if(clawPos == boxes.length -1)
-                    return Command.LEFT;
-            }
-            else
-            {
+            if(checkIfOrdered(boxes))
                 return Command.VICTORY;
-            }
-
         }
 
         return Command.WARNING;
