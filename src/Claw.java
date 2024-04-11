@@ -59,12 +59,9 @@ public class Claw {
     }
     static boolean checkIfOrdered(int[] array)
     {
-        for(int j = 0; j < array.length - 1; j++ )
-        {
-            for (int i = 0; i < array.length - 1; i++) {
-                if (i > j && array[i] > array[j])
-                    return false;
-            }
+        for (int i = 0; i < array.length - 1; i++) {
+            if (array[i + 1] > array[i])
+                return false;
         }
         return true;
     }
@@ -96,13 +93,15 @@ public class Claw {
             }
             if(checkIfOrdered(boxes))
                 return Command.VICTORY;
+            if(clawPos == 0)
+                return Command.RIGHT;
         }
 
         return Command.WARNING;
     }
     public static void main(String[] args) {
         int clawPos = 0;
-        int[] boxes = new int[]{3,5,3,2,2};
+        int[] boxes = new int[]{3,3,2,2,2};
         int boxInClaw = 0;
         boolean gane = false;
         for (int i = 0;i <100;i++)
